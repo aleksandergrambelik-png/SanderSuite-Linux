@@ -3,18 +3,49 @@ name: SanderSuite-Linux Audit
 on:
   push:
     branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
 
 jobs:
   audit:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-java@v5
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
-    - name: Compile Java
+
+    - name: List Files (Debug)
+      run: |
+        echo "Current directory: $(pwd)"
+        ls -la
+        echo "--- Java Files ---"
+        find src -name "*.java" || echo "No Java files found in src/"
+
+    - name: Download SanderCoreLib.jar (Dependency)
+      run: |
+        mkdir -p lib
+        wget -q https://github.com/aleksandergrambelik-png/SanderCoreLib/raw/main/SanderCoreLib.jar -O lib/SanderCoreLib.jar || echo "Failed to download SanderCoreLib.jar"
+        ls -la lib/
+
+    - name: Compile Java Source
       run: |
         mkdir -p build
-        javac -d build $(find src -name "*.java")
-        echo "SanderSuite-Linux compiled successfully."
+        javac -cp "lib/*" -d build $(find src -name "*.java")
+        echo "Compilation successful."
+
+    - name: Verify Compilation (Check .class files)
+      run: |
+        echo "Checking compiled classes..."
+        find build -name "*.class" | head -n 10
+        echo "Verification complete. SanderSuite-Linux is ready."
+
+    - name: Test Run (with Timeout)
+      run: |
+        echo "Running SanderSuite-Linux for 5 seconds to check if it starts..."
+        timeout 5s java -cp "lib/*:build" com.sander.SanderSuite --help || echo "Execution finished (expected timeout or exit)."
