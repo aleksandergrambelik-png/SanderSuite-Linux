@@ -25,18 +25,11 @@ jobs:
         echo "--- src folder ---"
         ls -la src/com/sander/ || echo "src/com/sander/ not found"
 
-    - name: Download SanderCoreLib.jar (Dependency)
-      run: |
-        mkdir -p lib
-        echo "Downloading SanderCoreLib.jar..."
-        wget https://github.com/aleksandergrambelik-png/SanderCoreLib/raw/main/SanderCoreLib.jar -O lib/SanderCoreLib.jar || echo "FAILED TO DOWNLOAD JAR"
-        ls -la lib/
-
     - name: Compile Java Source
       run: |
-        mkdir -p build
         echo "Compiling Java files..."
-        javac -cp "lib/*" -d build $(find src -name "*.java") || echo "COMPILATION FAILED"
+        mkdir -p build
+        javac -d build $(find src -name "*.java") || echo "COMPILATION FAILED"
         echo "Compilation step finished."
 
     - name: Verify Compilation
